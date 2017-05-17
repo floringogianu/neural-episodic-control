@@ -1,0 +1,34 @@
+# Example config file
+
+label: NEC-dev
+env_name: "Catcher-Level0-v0"
+estimator: &estimator catch_conv
+seed: 42
+cuda: &cuda false
+profiling: no
+#env_name: "SpaceInvadersDeterministic-v0"
+#estimator: &estimator atari
+
+training:
+  step_no: &step_no 10000
+
+agent:
+  name: "nec"
+  cuda: *cuda
+  estimator: *estimator
+  preprocessor: catch
+  rescale: [84, 84] # where required
+  knn_no: 50
+  rebuild_interval: 16
+  memory:
+    size: 1000
+    key_size: 128
+  epsilon: 0.05
+
+evaluator:
+  eval_steps: 2400
+  eval_eps: 1000
+  eval_interval: 100000
+  eval_start: 100000
+  estimator: *estimator
+  cuda: *cuda

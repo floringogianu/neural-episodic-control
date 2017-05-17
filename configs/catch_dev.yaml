@@ -1,0 +1,44 @@
+# Example config file
+
+label: NEC-dev
+env_name: "Catcher-Level0-v0"
+estimator: &estimator catch_conv
+seed: 43
+cuda: &cuda false
+profiling: no
+report_freq: &report_freq 256
+#env_name: "SpaceInvadersDeterministic-v0"
+#estimator: &estimator atari
+
+training:
+  step_no: &step_no 512000
+  batch_size: &batch_size 32
+  update_freq: &update_freq 512
+  n_horizon: &n_horizon 16
+  lr: &lr .00000635
+
+agent:
+  name: "nec"
+  preprocessor: catch
+  rescale: [84, 84] # where required
+  epsilon: 0.05
+  experience_replay: 5000
+  dnd:
+    size: 5000
+    knn_no: 5
+    linear_projection: 32
+  cuda: *cuda
+  estimator: *estimator
+  n_horizon: *n_horizon
+  update_freq: *update_freq
+  batch_size: *batch_size
+  report_freq: *report_freq
+  lr: *lr
+
+evaluator:
+  eval_steps: 2400
+  eval_eps: 1000
+  eval_interval: 100000
+  eval_start: 100000
+  estimator: *estimator
+  cuda: *cuda
