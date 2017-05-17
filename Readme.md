@@ -12,9 +12,9 @@ Just run `python main.py -cf catch_dev`.
 
 ## To do:
 
-[] Implement a proper priority queue for the DND `pop` function.
-[] More performance profiling.
-[] Figure out if a more efficient KD-tree can be implemented.
-[] Add support for Atari games.
-  [] Atari feature extractor.
-  [] Frame preprocessing.
+- [ ] Implement a proper priority queue for the DND `pop` function.
+- [ ] More performance profiling.
+- [ ] Figure out if a more efficient KD-tree can be implemented.
+- [ ] Add support for Atari games.
+  - [ ] Atari feature extractor.
+  - [ ] Frame preprocessing.
