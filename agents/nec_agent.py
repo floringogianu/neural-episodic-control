@@ -25,11 +25,12 @@ class NECAgent(BaseAgent):
 
         # Feature extractor and embedding size
         FeatureExtractor = get_estimator(cmdl.estimator)
+        state_dim = (1, 24) if not cmdl.rescale else (1, 84)
         if dnd.linear_projection:
-            self.feature_extractor = FeatureExtractor((1, 24),
+            self.feature_extractor = FeatureExtractor(state_dim,
                                                       dnd.linear_projection)
         elif dnd.linear_projection is False:
-            self.feature_extractor = FeatureExtractor((1, 24), None)
+            self.feature_extractor = FeatureExtractor(state_dim, None)
         embedding_size = self.feature_extractor.get_embedding_size()
 
         # DNDs, Memory, N-step buffer
@@ -155,7 +156,7 @@ class NECAgent(BaseAgent):
         # fill the dnds with knn_no * (action_no + 1)
         action = np.random.randint(self.action_no)
         self.dnds[action].write(h, 0.1, update_q)
-        self.knn_ready = self.step_cnt >= self.cmdl.dnd.knn_no * \
+        self.knn_ready = self.step_cnt >= 2 * self.cmdl.dnd.knn_no * \
             (self.action_space.n + 1)
         if self.knn_ready:
             for dnd in self.dnds:

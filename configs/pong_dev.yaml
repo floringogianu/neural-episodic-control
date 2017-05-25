@@ -1,32 +1,30 @@
 # Example config file
 
-label: NEC-dev
-env_class: catch
-env_name: "Catcher-Level0-v0"
-estimator: &estimator catch_conv
+label: Pong-dev
+env_class: atari
+env_name: "PongDeterministic-v0"
+estimator: &estimator atari_conv
 seed: 43
 cuda: &cuda false
 profiling: no
-report_freq: &report_freq 256
-#env_name: "SpaceInvadersDeterministic-v0"
-#estimator: &estimator atari
+report_freq: &report_freq 16
 
 training:
   step_no: &step_no 512000
-  batch_size: &batch_size 32
+  batch_size: &batch_size 64
   update_freq: &update_freq 512
-  n_horizon: &n_horizon 16
+  n_horizon: &n_horizon 100
   lr: &lr .00000635
 
 agent:
   name: "nec"
-  rescale: no # where required
+  rescale: [84, 84] # where required
   epsilon: 0.05
-  experience_replay: 5000
+  experience_replay: 50000
   dnd:
-    size: 5000
-    knn_no: 5
-    linear_projection: 32
+    size: 50000
+    knn_no: 50
+    linear_projection: 64
   cuda: *cuda
   estimator: *estimator
   n_horizon: *n_horizon

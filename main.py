@@ -11,10 +11,11 @@ from agents import get_agent
 def train_agent(cmdl):
     step_cnt = 0
     ep_cnt = 0
-    preprocess = Preprocessor(cmdl.agent.preprocessor).transform
+    preprocess = Preprocessor(cmdl.env_class).transform
 
     env = utils.get_new_env(cmdl.env_name)
     agent = get_agent(cmdl.agent.name)(env.action_space, cmdl.agent)
+    display_setup(env, cmdl)
 
     start_time = time.time()
     while step_cnt < cmdl.training.step_no:
@@ -33,6 +34,9 @@ def train_agent(cmdl):
             step_cnt += 1
             agent.gather_stats(r, done)
 
+            if step_cnt % (10 * cmdl.report_freq) == 0:
+                print(step_cnt, end="\r", flush=True)
+
         if ep_cnt % cmdl.report_freq == 0:
             agent.display_stats(start_time)
             agent.display_model_stats()
@@ -43,6 +47,22 @@ def train_agent(cmdl):
     for i in range(env.action_space.n):
         print(agent.kv[i].keys)
     """
+
+
+def display_setup(env, config):
+    print("----------------------------")
+    print("Seed         : %d" % config.seed)
+    print("DND size     : %d" % config.agent.dnd.size)
+    print("DND number   : %d" % env.action_space.n)
+    print("Feature size : %s" % str(config.agent.dnd.linear_projection or
+          "Conv out."))
+    print("K-nearest    : %d" % config.agent.dnd.knn_no)
+    print("N-step       : %d" % config.agent.n_horizon)
+    print("Optim step   : %d" % config.agent.update_freq)
+    print("L-rate       : %.6f" % config.agent.lr)
+    print("----------------------------")
+    print("stp, nst, act  |  return")
+    print("----------------------------")
 
 
 def display_stats(ep_cnt, step_cnt, elapsed_time):
@@ -58,18 +78,5 @@ if __name__ == "__main__":
     config = utils.parse_config_file(cmd_args)
     torch.manual_seed(config.seed)
     numpy.random.seed(config.seed)
-
-    print("----------------------------")
-    print("Seed         : %d" % config.seed)
-    print("DND size     : %d" % config.agent.dnd.size)
-    print("Feature size : %s" % str(config.agent.dnd.linear_projection or
-          "Conv out."))
-    print("K-nearest    : %d" % config.agent.dnd.knn_no)
-    print("N-step       : %d" % config.agent.n_horizon)
-    print("Optim step   : %d" % config.agent.update_freq)
-    print("L-rate       : %.6f" % config.agent.lr)
-    print("----------------------------")
-    print("stp, nst, act  |  return")
-    print("----------------------------")
 
     train_agent(config)
