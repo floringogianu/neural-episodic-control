@@ -11,15 +11,15 @@ report_freq: &report_freq 16
 
 training:
   step_no: &step_no 512000
-  batch_size: &batch_size 64
-  update_freq: &update_freq 512
+  batch_size: &batch_size 32
+  update_freq: &update_freq 16
   n_horizon: &n_horizon 100
-  lr: &lr .00000635
+  lr: &lr .0000635
 
 agent:
   name: "nec"
   rescale: [84, 84] # where required
-  epsilon: 0.05
+  epsilon: 0.2
   experience_replay: 50000
   dnd:
     size: 50000

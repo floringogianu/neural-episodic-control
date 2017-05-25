@@ -10,7 +10,7 @@ from utils import TorchTypes
 
 
 def update_q(old, new):
-    return old + 0.1 * (new - old)
+    return old + 0.22 * (new - old)
 
 
 class NECAgent(BaseAgent):
@@ -41,6 +41,7 @@ class NECAgent(BaseAgent):
         self.N_buff = []
         self._key_tmp = None
         self.knn_ready = False
+        self.initial_val = -21.00
 
         self.optimizer = torch.optim.Adam(
                 self.feature_extractor.parameters(), lr=self.lr)
@@ -155,7 +156,7 @@ class NECAgent(BaseAgent):
     def _heat_up_dnd(self, h):
         # fill the dnds with knn_no * (action_no + 1)
         action = np.random.randint(self.action_no)
-        self.dnds[action].write(h, 0.1, update_q)
+        self.dnds[action].write(h, self.initial_val, update_q)
         self.knn_ready = self.step_cnt >= 2 * self.cmdl.dnd.knn_no * \
             (self.action_space.n + 1)
         if self.knn_ready:
