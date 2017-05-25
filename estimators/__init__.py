@@ -1,11 +1,10 @@
 # Bitdefender, 2107
 
-from estimators.atari_net import AtariNet
-from estimators.mini_net import MiniNet
-from estimators.catch_net import CatchNet
-from estimators.catch_conv import CatchConv
-from estimators.dnd import DND
-from estimators.kernel_density_estimate import KernelDensityEstimate
+from .atari_net import AtariNet
+from .mini_net import MiniNet
+from .catch_net import CatchNet
+from .catch_conv import CatchConv
+from .kernel_density_estimate import KernelDensityEstimate
 
 ESTIMATORS = {
     "atari": AtariNet,

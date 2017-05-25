@@ -3,7 +3,7 @@ import pickle
 
 from sklearn.neighbors import KDTree
 from xxhash import xxh64 as xxhs
-from .kernel_density_estimate import KernelDensityEstimate
+from estimators.kernel_density_estimate import KernelDensityEstimate
 from torch.autograd import Variable
 
 

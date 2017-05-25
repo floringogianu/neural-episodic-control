@@ -4,8 +4,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 from .base_agent import BaseAgent
-from estimators import DND, get_estimator
-from data_structures import ReplayMemory, Transition
+from estimators import get_estimator
+from data_structures import ReplayMemory, Transition, DND
 from utils import TorchTypes
 
 

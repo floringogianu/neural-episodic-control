@@ -1,11 +1,12 @@
 """ Functions and classes for parsing config files and command line arguments.
 """
+import argparse
+import yaml
 
 
 def parse_cmd_args():
-    """Return parsed command line arguments."""
-    import argparse
-
+    """ Return parsed command line arguments.
+    """
     p = argparse.ArgumentParser(description='')
     p.add_argument('-cf', '--config_file', type=str, default="dev",
                    metavar='config_file_name::str', help='Config file name.')
@@ -13,28 +14,18 @@ def parse_cmd_args():
     return args
 
 
-class Messenger(object):
-    """ Turns a dictionary into a nested object.
-
-        Instead of `cmdl["agent"]["name"]` we can do now `cmdl.agent.name`
+def to_namespace(d):
+    """ Convert a dict to a namespace.
     """
-    def __init__(self, **kwargs):
-        self.__dict__ = kwargs
-
-        for key, value in kwargs.copy().items():
-            if isinstance(value, dict):
-                self.__dict__[key] = Messenger(**value)
+    n = argparse.Namespace()
+    for k, v in d.items():
+        setattr(n, k, to_namespace(v) if isinstance(v, dict) else v)
+    return n
 
 
 def parse_config_file(args):
-    import yaml
-
     config_path = "./configs/%s.yaml" % args.config_file
     f = open(config_path)
     config_data = yaml.load(f, Loader=yaml.SafeLoader)
     f.close()
-
-    # import pprint
-    # pp = pprint.PrettyPrinter(indent=2)
-    # pp.pprint(config_data)
-    return Messenger(**config_data)
+    return to_namespace(config_data)
