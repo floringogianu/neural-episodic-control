@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import math
 from torch.autograd import Variable
 import torch.nn.functional as F
 
@@ -41,12 +42,12 @@ class NECAgent(BaseAgent):
         self.N_buff = []
         self._key_tmp = None
         self.knn_ready = False
-        self.initial_val = -21.00
+        self.initial_val = 0.1
 
         self.optimizer = torch.optim.Adam(
                 self.feature_extractor.parameters(), lr=self.lr)
         self.optimizer.zero_grad()
-        self.max_q = 0
+        self.max_q = -math.inf
 
     def evaluate_policy(self, state):
         """ Policy Evaluation.

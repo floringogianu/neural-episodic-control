@@ -34,9 +34,6 @@ def train_agent(cmdl):
             step_cnt += 1
             agent.gather_stats(r, done)
 
-            if step_cnt % (10 * cmdl.report_freq) == 0:
-                print(step_cnt, end="\r", flush=True)
-
         if ep_cnt % cmdl.report_freq == 0:
             agent.display_stats(start_time)
             agent.display_model_stats()
