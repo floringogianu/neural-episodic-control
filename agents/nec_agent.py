@@ -28,11 +28,10 @@ class NECAgent(BaseAgent):
         FeatureExtractor = get_estimator(cmdl.estimator)
         state_dim = (1, 24) if not cmdl.rescale else (1, 84)
         if dnd.linear_projection:
-            self.feature_extractor = FeatureExtractor(state_dim,
-                                                      dnd.linear_projection)
+            self.conv = FeatureExtractor(state_dim, dnd.linear_projection)
         elif dnd.linear_projection is False:
-            self.feature_extractor = FeatureExtractor(state_dim, None)
-        embedding_size = self.feature_extractor.get_embedding_size()
+            self.conv = FeatureExtractor(state_dim, None)
+        embedding_size = self.conv.get_embedding_size()
 
         # DNDs, Memory, N-step buffer
         self.dnds = [DND(dnd.size, embedding_size, dnd.knn_no)
@@ -40,13 +39,14 @@ class NECAgent(BaseAgent):
         self.replay_memory = ReplayMemory(capacity=cmdl.experience_replay)
         self.N_step = self.cmdl.n_horizon
         self.N_buff = []
+
+        self.optimizer = torch.optim.Adam(self.conv.parameters(), lr=self.lr)
+        self.optimizer.zero_grad()
+
+        # Temp data, flags, stats, misc
         self._key_tmp = None
         self.knn_ready = False
         self.initial_val = 0.1
-
-        self.optimizer = torch.optim.Adam(
-                self.feature_extractor.parameters(), lr=self.lr)
-        self.optimizer.zero_grad()
         self.max_q = -math.inf
 
     def evaluate_policy(self, state):
@@ -60,7 +60,7 @@ class NECAgent(BaseAgent):
             k nearest neighbors.
         """
         state = torch.from_numpy(state).unsqueeze(0).unsqueeze(0)
-        h = self.feature_extractor(Variable(state, volatile=True))
+        h = self.conv(Variable(state, volatile=True))
         self._key_tmp = h
 
         # corner case, randomly fill the buffers so that we can perform knn.
@@ -70,12 +70,10 @@ class NECAgent(BaseAgent):
         # query each DND for q values and pick the largest one.
         if np.random.uniform() > self.cmdl.epsilon:
             v, action = self._query_dnds(h)
-            if self.max_q < v:
-                self.max_q = v
+            self.max_q = v if self.max_q < v else self.max_q
+            return action
         else:
             return self.action_space.sample()
-        # print("%3d, %3d  |  %0.3f" % (self.step_cnt, action, _))
-        return action
 
     def improve_policy(self, _state, _action, reward, state, done):
         """ Policy Evaluation.
@@ -87,7 +85,7 @@ class NECAgent(BaseAgent):
             if not done:
                 # compute Q(t + N)
                 state = torch.from_numpy(state).unsqueeze(0).unsqueeze(0)
-                h = self.feature_extractor(Variable(state, volatile=True))
+                h = self.conv(Variable(state, volatile=True))
                 R, _ = self._query_dnds(h)
 
             for i in range(len(self.N_buff) - 1, -1, -1):
@@ -131,7 +129,7 @@ class NECAgent(BaseAgent):
         returns = Variable(returns)
 
         # Compute Q(s, a)
-        features = self.feature_extractor(states)
+        features = self.conv(states)
 
         v_variables = []
         for i in range(self.cmdl.batch_size):
@@ -142,13 +140,13 @@ class NECAgent(BaseAgent):
         q_values = torch.stack(v_variables)
 
         loss = F.smooth_l1_loss(q_values, returns)
-        # loss.data.clamp(-1, 1)
+        loss.data.clamp(-1, 1)
 
         # Accumulate gradients
         loss.backward()
 
     def _update_model(self):
-        for param in self.feature_extractor.parameters():
+        for param in self.conv.parameters():
             param.grad.data.clamp(-1, 1)
 
         self.optimizer.step()
@@ -186,7 +184,7 @@ class NECAgent(BaseAgent):
         param_abs_mean = 0
         grad_abs_mean = 0
         n_params = 0
-        for p in self.feature_extractor.parameters():
+        for p in self.conv.parameters():
             param_abs_mean += p.data.abs().sum()
             grad_abs_mean += p.grad.data.abs().sum()
             n_params += p.data.nelement()
