@@ -31,7 +31,10 @@ class BaseAgent(object):
     def display_stats(self, start_time):
         mean_rw = torch.FloatTensor([self.ep_reward]).mean()
         fps = self.step_cnt / (time.time() - start_time)
-        print(clr("[%s] ep_cnt=%d, reward/ep=%3.2f, fps=%.2f"
+        print(clr("[%s] ep=%6d, reward/ep=%3.2f, fps=%.2f"
               % (self.name, len(self.ep_reward), mean_rw, fps),
               'white', 'on_cyan'))
         self.ep_reward.clear()
+
+    def display_model_stats(self):
+        pass

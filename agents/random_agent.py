@@ -2,7 +2,7 @@ from .base_agent import BaseAgent
 
 
 class RandomAgent(BaseAgent):
-    def __init__(self, action_space):
+    def __init__(self, action_space, cmdl):
         BaseAgent.__init__(self, action_space)
 
         self.name = "RND_agent"
