@@ -10,11 +10,12 @@ profiling: no
 report_freq: &report_freq 16
 
 training:
-  step_no: &step_no 512000
+  step_no: &step_no 10000000
   batch_size: &batch_size 32
-  update_freq: &update_freq 16
+  update_freq: &update_freq no
   n_horizon: &n_horizon 100
-  lr: &lr .0000635
+  fast_lr: &fast_lr 0.1
+  slow_lr: &slow_lr .0000635
 
 agent:
   name: "nec"
@@ -31,7 +32,8 @@ agent:
   update_freq: *update_freq
   batch_size: *batch_size
   report_freq: *report_freq
-  lr: *lr
+  fast_lr: *fast_lr
+  slow_lr: *slow_lr
 
 evaluator:
   eval_steps: 2400

@@ -8,15 +8,14 @@ seed: 43
 cuda: &cuda false
 profiling: no
 report_freq: &report_freq 256
-#env_name: "SpaceInvadersDeterministic-v0"
-#estimator: &estimator atari
 
 training:
   step_no: &step_no 512000
   batch_size: &batch_size 32
-  update_freq: &update_freq 512
+  update_freq: &update_freq no
   n_horizon: &n_horizon 16
-  lr: &lr .00000635
+  fast_lr: &fast_lr 0.1
+  slow_lr: &slow_lr .00000635
 
 agent:
   name: "nec"
@@ -33,7 +32,8 @@ agent:
   update_freq: *update_freq
   batch_size: *batch_size
   report_freq: *report_freq
-  lr: *lr
+  fast_lr: *fast_lr
+  slow_lr: *slow_lr
 
 evaluator:
   eval_steps: 2400

@@ -54,12 +54,15 @@ def display_setup(env, config):
     print("Feature size : %s" % str(config.agent.dnd.linear_projection or
           "Conv out."))
     print("K-nearest    : %d" % config.agent.dnd.knn_no)
+    print("--------- Training ----------")
     print("N-step       : %d" % config.agent.n_horizon)
-    print("Optim step   : %d" % config.agent.update_freq)
-    print("L-rate       : %.6f" % config.agent.lr)
-    print("----------------------------")
+    print("Optim Freq   : %d" % config.agent.update_freq)
+    print("Batch        : %d" % config.agent.batch_size)
+    print("Fast Lr      : %.6f" % config.agent.fast_lr)
+    print("Slow Lr      : %.6f" % config.agent.slow_lr)
+    print("-----------------------------")
     print("stp, nst, act  |  return")
-    print("----------------------------")
+    print("-----------------------------")
 
 
 def display_stats(ep_cnt, step_cnt, elapsed_time):

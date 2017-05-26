@@ -10,8 +10,10 @@ from data_structures import ReplayMemory, Transition, DND
 from utils import TorchTypes
 
 
-def update_q(old, new):
-    return old + 0.22 * (new - old)
+def update_rule(fast_lr):
+    def update_q(old, new):
+        return old + fast_lr * (new - old)
+    return update_q
 
 
 class NECAgent(BaseAgent):
@@ -21,7 +23,8 @@ class NECAgent(BaseAgent):
         self.name = "NEC_agent"
         self.cmdl = cmdl
         self.dtype = TorchTypes()
-        self.lr = cmdl.lr
+        self.slow_lr = slow_lr = cmdl.slow_lr
+        self.fast_lr = fast_lr = cmdl.fast_lr
         dnd = cmdl.dnd
 
         # Feature extractor and embedding size
@@ -40,8 +43,9 @@ class NECAgent(BaseAgent):
         self.N_step = self.cmdl.n_horizon
         self.N_buff = []
 
-        self.optimizer = torch.optim.Adam(self.conv.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.conv.parameters(), lr=slow_lr)
         self.optimizer.zero_grad()
+        self.update_q = update_rule(fast_lr)
 
         # Temp data, flags, stats, misc
         self._key_tmp = None
@@ -96,7 +100,7 @@ class NECAgent(BaseAgent):
                 R = self.N_buff[i][3] + 0.99 * R
 
                 # write to DND
-                self.dnds[a].write(h.data, R, update_q)
+                self.dnds[a].write(h.data, R, self.update_q)
                 # print("%3d, %3d, %3d  |  %0.3f" % (self.step_cnt, i, a, R))
 
                 # append to experience replay
@@ -106,6 +110,9 @@ class NECAgent(BaseAgent):
 
             for dnd in self.dnds:
                 dnd.rebuild_tree()
+
+        if self.cmdl.update_freq is False:
+            return
 
         if (self.step_cnt % self.cmdl.update_freq == 0) and (
                 len(self.replay_memory) > self.cmdl.batch_size):
@@ -124,6 +131,9 @@ class NECAgent(BaseAgent):
         return q_vals.max(0)[0][0, 0], q_vals.max(0)[1][0, 0]
 
     def _accumulate_gradient(self, states, actions, returns):
+        """ Compute gradient
+            v=Q(s,a), return = QN(s,a)
+        """
         states = Variable(states)
         actions = Variable(actions)
         returns = Variable(returns)
@@ -155,7 +165,7 @@ class NECAgent(BaseAgent):
     def _heat_up_dnd(self, h):
         # fill the dnds with knn_no * (action_no + 1)
         action = np.random.randint(self.action_no)
-        self.dnds[action].write(h, self.initial_val, update_q)
+        self.dnds[action].write(h, self.initial_val, self.update_q)
         self.knn_ready = self.step_cnt >= 2 * self.cmdl.dnd.knn_no * \
             (self.action_space.n + 1)
         if self.knn_ready:
@@ -186,7 +196,8 @@ class NECAgent(BaseAgent):
         n_params = 0
         for p in self.conv.parameters():
             param_abs_mean += p.data.abs().sum()
-            grad_abs_mean += p.grad.data.abs().sum()
+            if p.grad:
+                grad_abs_mean += p.grad.data.abs().sum()
             n_params += p.data.nelement()
 
         print("[NEC_agent] step=%6d, Wm: %.9f" % (
