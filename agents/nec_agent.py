@@ -144,7 +144,7 @@ class NECAgent(BaseAgent):
         v_variables = []
         for i in range(self.cmdl.batch_size):
             act = actions[i].data[0]
-            v = self.dnds[act].lookup(features[i].unsqueeze(0), volatile=False)
+            v = self.dnds[act].lookup(features[i].unsqueeze(0), training=True)
             v_variables.append(v)
 
         q_values = torch.stack(v_variables)

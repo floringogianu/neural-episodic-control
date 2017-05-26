@@ -4,7 +4,7 @@ import torch
 
 
 class KernelDensityEstimate(object):
-    def __init__(self, delta=0.0003):
+    def __init__(self, delta=0.001):
         self.delta = delta
 
     def gaussian_kernel(self, x, x_i):

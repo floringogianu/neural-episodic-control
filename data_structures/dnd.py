@@ -44,19 +44,14 @@ class DND(object):
             write_idx = self._get_least_used()
             t = self.keys[write_idx]
             old_key = self._hash(t)
-            try:
-                self.M.pop(old_key)
-            except KeyError:
-                print("Old: ", old_key)
-                print(t)
-                print(self.count, self.idx, write_idx)
-                print(self.M)
+            self.M.pop(old_key)
             self._write(key, h, v, write_idx)
             self.new += 1
         self.count += 1
         assert self.idx == len(self.M), "Belele!!"
 
-    def lookup(self, h, volatile=True):
+    def lookup(self, h, training=False):
+        volatile = not training
         _, knn_indices = self.kd_tree.query(h.data.numpy(), k=self.knn_no)
         mask = torch.from_numpy(knn_indices).long().squeeze()
         h_i = Variable(self.keys[mask], volatile=volatile)
