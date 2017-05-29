@@ -10,18 +10,18 @@ profiling: no
 report_freq: &report_freq 256
 
 training:
-  step_no: &step_no 512000
-  batch_size: &batch_size 32
-  update_freq: &update_freq no
+  step_no: &step_no 2512000
+  batch_size: &batch_size 16
+  update_freq: &update_freq 4
   n_horizon: &n_horizon 16
   fast_lr: &fast_lr 0.1
-  slow_lr: &slow_lr .00000635
+  slow_lr: &slow_lr .0000635
 
 agent:
   name: "nec"
   rescale: no # where required
-  epsilon: 0.05
-  experience_replay: 5000
+  epsilon: 0.25
+  experience_replay: 20000
   dnd:
     size: 5000
     knn_no: 5

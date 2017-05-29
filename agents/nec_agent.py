@@ -8,6 +8,7 @@ from .base_agent import BaseAgent
 from estimators import get_estimator
 from data_structures import ReplayMemory, Transition, DND
 from utils import TorchTypes
+from itertools import chain
 
 
 def update_rule(fast_lr):
@@ -43,10 +44,15 @@ class NECAgent(BaseAgent):
         self.N_step = self.cmdl.n_horizon
         self.N_buff = []
 
-        self.optimizer = torch.optim.Adam(self.conv.parameters(), lr=slow_lr)
+        # Get all the parameters to be optimized: DND keys, values and weights
+        dnd_keys = chain([dnd.keys for dnd in self.dnds])
+        dnd_vals = chain([dnd.vals for dnd in self.dnds])
+        all_params = chain(self.conv.parameters(), dnd_keys, dnd_vals)
+        self.optimizer = torch.optim.Adam(all_params, lr=slow_lr)
         self.optimizer.zero_grad()
-        self.update_q = update_rule(fast_lr)
 
+        # Set update rule for the tabular learning part
+        self.update_q = update_rule(fast_lr)
         # Temp data, flags, stats, misc
         self._key_tmp = None
         self.knn_ready = False
@@ -69,7 +75,7 @@ class NECAgent(BaseAgent):
 
         # corner case, randomly fill the buffers so that we can perform knn.
         if not self.knn_ready:
-            return self._heat_up_dnd(h.data)
+            return self._heat_up_dnd(state, h)
 
         # query each DND for q values and pick the largest one.
         if np.random.uniform() > self.cmdl.epsilon:
@@ -82,6 +88,7 @@ class NECAgent(BaseAgent):
     def improve_policy(self, _state, _action, reward, state, done):
         """ Policy Evaluation.
         """
+        _state = torch.from_numpy(_state).unsqueeze(0).unsqueeze(0)
         self.N_buff.append((_state, self._key_tmp, _action, reward))
 
         R = 0
@@ -100,7 +107,7 @@ class NECAgent(BaseAgent):
                 R = self.N_buff[i][3] + 0.99 * R
 
                 # write to DND
-                self.dnds[a].write(h.data, R, self.update_q)
+                self.dnds[a].write(s, h.data, R, self.update_q)
                 # print("%3d, %3d, %3d  |  %0.3f" % (self.step_cnt, i, a, R))
 
                 # append to experience replay
@@ -141,6 +148,7 @@ class NECAgent(BaseAgent):
         # Compute Q(s, a)
         features = self.conv(states)
 
+        # This should be a batch operation
         v_variables = []
         for i in range(self.cmdl.batch_size):
             act = actions[i].data[0]
@@ -150,22 +158,22 @@ class NECAgent(BaseAgent):
         q_values = torch.stack(v_variables)
 
         loss = F.smooth_l1_loss(q_values, returns)
-        loss.data.clamp(-1, 1)
+        # loss.data.clamp(-1, 1)
 
         # Accumulate gradients
         loss.backward()
 
     def _update_model(self):
         for param in self.conv.parameters():
-            param.grad.data.clamp(-1, 1)
+            param.grad.data.clamp(-5, 5)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-    def _heat_up_dnd(self, h):
+    def _heat_up_dnd(self, state, h):
         # fill the dnds with knn_no * (action_no + 1)
         action = np.random.randint(self.action_no)
-        self.dnds[action].write(h, self.initial_val, self.update_q)
+        self.dnds[action].write(state, h.data, self.initial_val, self.update_q)
         self.knn_ready = self.step_cnt >= 2 * self.cmdl.dnd.knn_no * \
             (self.action_space.n + 1)
         if self.knn_ready:
@@ -184,8 +192,7 @@ class NECAgent(BaseAgent):
         batch_sz = len(batch) if batch_sz is None else batch_sz
         batch = Transition(*zip(*batch))
 
-        states = [torch.from_numpy(s).unsqueeze(0) for s in batch.state]
-        state_batch = torch.stack(states).type(self.dtype.FloatTensor)
+        state_batch = torch.cat(batch.state)
         action_batch = self.dtype.LongTensor(batch.action)
         rt_batch = self.dtype.FloatTensor(batch.Rt)
         return [state_batch, action_batch, rt_batch]

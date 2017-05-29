@@ -21,9 +21,9 @@ agent:
   name: "nec"
   rescale: [84, 84] # where required
   epsilon: 0.2
-  experience_replay: 50000
+  experience_replay: 100000
   dnd:
-    size: 50000
+    size: 100000
     knn_no: 50
     linear_projection: 64
   cuda: *cuda
